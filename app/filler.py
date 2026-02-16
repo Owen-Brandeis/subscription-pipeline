@@ -42,7 +42,7 @@ def _draw_text_field(
     font_name: str = "Helvetica",
     font_size: float = 10,
 ) -> None:
-    """Draw text at (x0, y0) in PDF coords (y-up). Shrink font if too wide for bbox."""
+    """Draw text in bbox. Bbox is in PyMuPDF coords (top-left origin, y down); we convert to PDF y-up for drawString."""
     if not text:
         return
     box_w = x1 - x0
@@ -54,6 +54,8 @@ def _draw_text_field(
             break
         fs -= 1
     c.setFont(font_name, fs)
+    c.setFillColorRGB(0, 0, 0)
+    # PyMuPDF: y0=top, y1=bottom. PDF: bottom of box = page_h - y1
     baseline_y = page_h - y1 + min(2, (box_h - fs) / 2)
     c.drawString(x0, baseline_y, text)
 
@@ -104,22 +106,23 @@ def _draw_multiline(
         line_height = font_size * 1.2
         lines = _wrap_lines(text.strip(), box_w, font_name, font_size)
     c.setFont(font_name, font_size)
-    # Draw from bottom line up (PDF y-up: bottom of box = page_h - y1)
+    c.setFillColorRGB(0, 0, 0)
+    # PyMuPDF: y0=top, y1=bottom. PDF: bottom of box = page_h - y1
     baseline = page_h - y1 + (box_h - len(lines) * line_height) / 2 + font_size * 0.3
     for i, line in enumerate(lines):
         c.drawString(x0, baseline + (len(lines) - 1 - i) * line_height, line)
 
 
 def _draw_checkbox(c: rl_canvas.Canvas, x0: float, y0: float, x1: float, y1: float, page_h: float) -> None:
-    """Draw 'X' centered in bbox (coordinates top-down; convert to PDF y-up for drawString)."""
+    """Draw 'X' centered in bbox. Bbox in PyMuPDF coords (y down); convert to PDF y-up."""
     from reportlab.pdfbase import pdfmetrics
 
     cx = (x0 + x1) / 2
     box_h = y1 - y0
     fs = max(6, min(12, box_h * 0.8))
     c.setFont("Helvetica-Bold", fs)
+    c.setFillColorRGB(0, 0, 0)
     w = pdfmetrics.stringWidth("X", "Helvetica-Bold", fs)
-    # Baseline of X so it's vertically centered in bbox. PDF y-up: bottom of box = page_h - y1.
     baseline_y = page_h - y1 + (box_h - fs) / 2
     c.drawString(cx - w / 2, baseline_y, "X")
 
@@ -161,6 +164,7 @@ def _create_overlay_pages(
         buf = io.BytesIO()
         c = rl_canvas.Canvas(buf, pagesize=(width, height))
         c.setFont("Helvetica", 10)
+        c.setFillColorRGB(0, 0, 0)
         for f in page_fields:
             schema_path = (f.get("schema_path") or "").strip()
             if not schema_path:
@@ -221,7 +225,7 @@ def fill_template(
         if not overlay_reader.pages:
             continue
         overlay_page = overlay_reader.pages[0]
-        writer.pages[page_no].merge_page(overlay_page)
+        writer.pages[page_no].merge_page(overlay_page, over=True)
     Path(output_pdf_path).parent.mkdir(parents=True, exist_ok=True)
     with open(output_pdf_path, "wb") as f:
         writer.write(f)
