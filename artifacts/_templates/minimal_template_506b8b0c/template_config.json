@@ -1,0 +1,17 @@
+{
+  "template_id": "minimal_template_506b8b0c",
+  "pdf_sha256": "506b8b0ca065ae84c2c5f737bbb41b22d868c77bbe2573da77f83b235dc8e91b",
+  "page_count": 1,
+  "fields": [
+    {
+      "schema_path": "investor.legal_name",
+      "page": 0,
+      "bbox": [
+        100,
+        100,
+        200,
+        120
+      ]
+    }
+  ]
+}

@@ -1,1 +1,13 @@
-# subscription-pipeline dependencies
+fastapi
+uvicorn
+httpx
+python-dotenv
+pydantic
+pydantic-settings
+gradio
+PyMuPDF
+pypdf
+pdfplumber
+reportlab
+tenacity
+pytest

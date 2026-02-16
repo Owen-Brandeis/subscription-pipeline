@@ -1,0 +1,7 @@
+{
+  "investor.legal_name": "InvestorName",
+  "investor.entity_type": "EntityType",
+  "investment.amount.value": "SubscriptionAmount",
+  "signatures[0].signer_name": "SignerName",
+  "signatures[0].signed_date": "SignedDate"
+}

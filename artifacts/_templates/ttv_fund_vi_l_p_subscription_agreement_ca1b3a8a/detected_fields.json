@@ -1,0 +1,96 @@
+{
+  "pdf_sha256": "ca1b3a8adc119cea957a42ec00fb72972f2502ee0e2d774c984865b2823bb710",
+  "page_count": 41,
+  "candidates": [
+    {
+      "page": 32,
+      "label_text": "The most current versions of such forms and accompanying instructions are located at the  websites:",
+      "label_bbox": [
+        72.0,
+        289.33,
+        542.47,
+        316.39
+      ],
+      "field_bbox": [
+        71.76,
+        326.4,
+        585.24,
+        368.28
+      ],
+      "guess_type": "text",
+      "confidence": 0.0
+    },
+    {
+      "page": 32,
+      "label_text": "\uf06f   Form W-9  http://www.irs.ustreas.gov/pub/irs-pdf/fw9.pdf",
+      "label_bbox": [
+        77.4,
+        327.37,
+        304.68,
+        354.43
+      ],
+      "field_bbox": [
+        71.76,
+        368.28,
+        585.24,
+        410.16
+      ],
+      "guess_type": "text",
+      "confidence": 0.0
+    },
+    {
+      "page": 32,
+      "label_text": "\uf06f   Form W-9  http://www.irs.ustreas.gov/pub/irs-pdf/fw9.pdf",
+      "label_bbox": [
+        77.4,
+        327.37,
+        304.68,
+        354.43
+      ],
+      "field_bbox": [
+        71.76,
+        410.16,
+        585.24,
+        452.04
+      ],
+      "guess_type": "text",
+      "confidence": 0.0
+    },
+    {
+      "page": 32,
+      "label_text": "\uf06f   Form W-9  http://www.irs.ustreas.gov/pub/irs-pdf/fw9.pdf",
+      "label_bbox": [
+        77.4,
+        327.37,
+        304.68,
+        354.43
+      ],
+      "field_bbox": [
+        71.76,
+        452.04,
+        585.24,
+        493.92
+      ],
+      "guess_type": "text",
+      "confidence": 0.0
+    },
+    {
+      "page": 32,
+      "label_text": "\uf06f   Form W-9  http://www.irs.ustreas.gov/pub/irs-pdf/fw9.pdf",
+      "label_bbox": [
+        77.4,
+        327.37,
+        304.68,
+        354.43
+      ],
+      "field_bbox": [
+        71.76,
+        493.92,
+        585.24,
+        522.0
+      ],
+      "guess_type": "text",
+      "confidence": 0.0
+    }
+  ]
+}
