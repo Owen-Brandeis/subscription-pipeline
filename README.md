@@ -1,5 +1,9 @@
 # subscription-pipeline
 
+Install Dependencies: python3 -m pip install -r requirements.txt
+Run: python3 -m uvicorn app.web:app --reload --port 8000
+
+
 MVP web app: upload filled packet PDF + outline template PDF → parse/extract → validate → fill template (if configured) → download filled PDF from outbox.
 
 ## Setup
