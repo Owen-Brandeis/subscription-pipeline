@@ -80,15 +80,26 @@ class ReductoClient:
 
     @_retry()
     def parse_pdf_bytes(self, pdf_bytes: bytes) -> dict[str, Any]:
-        """Upload PDF and run parse. Returns full parse response as dict with _input_ref set."""
+        """Upload PDF and run parse. Returns full parse response as dict with _input_ref and job_id set."""
         upload = self._upload_bytes(pdf_bytes)
-        # API accepts UploadResponse or reducto:// URL
         input_ref = {"file_id": upload.file_id}
+        # Per Reducto best practices: agentic text improves form/key-value and handwriting; signatures for signature blocks
+        payload: dict[str, Any] = {
+            "input": input_ref,
+            "enhance": {
+                "agentic": [{"scope": "text"}],
+                "summarize_figures": True,
+            },
+            "formatting": {
+                "add_page_markers": True,
+                "include": ["signatures"],
+            },
+        }
         with httpx.Client(timeout=300.0) as client:
             r = client.post(
                 f"{self.base_url}/parse",
                 headers={**self._headers(), "Content-Type": "application/json"},
-                json={"input": input_ref},
+                json=payload,
             )
             r.raise_for_status()
             data = r.json()
@@ -96,45 +107,61 @@ class ReductoClient:
         logger.info("Parse job_id=%s", data.get("job_id"))
         return data
 
-    EXTRACT_INSTRUCTIONS = (
-        "Extract ONLY the fields in the schema. If a value is not explicitly present, use null. Do not guess. "
-        "If there are conflicting values, set the field to null and add an entry to issues with the conflicting candidates. "
-        "For every non-null field, provide evidence in an evidence array with: field_path, page number, and the exact quoted text snippet."
+    # System prompt per Reducto Extract Best Practices: document type, global rules, precision
+    EXTRACT_SYSTEM_PROMPT = (
+        "This is a private fund subscription agreement (subscription booklet or subscription agreement). "
+        "Extract ONLY values that appear explicitly in the document. Use null for any field not clearly present. Do not guess, infer, or calculate. "
+        "Be thorough: process every page. Subscriber details are often on the first pages; subscription amount and signature blocks are often on the last pages. "
+        "For amounts: extract the numeric value only (e.g. 1000000 for $1,000,000 or 'One Million Dollars'). No currency symbols or commas in the value. "
+        "For dates: use the format as written (e.g. MM/DD/YYYY or Month DD, YYYY). "
+        "If the same field appears in multiple places with different values, set the field to null. "
+        "Match entity_type and tax_id.type to the schema enums exactly (e.g. 'Limited Liability Company' -> LLC, 'Employer Identification Number' -> EIN)."
     )
 
     @_retry()
     def extract_from_parse(
-        self, parse_response: dict[str, Any], schema: dict[str, Any]
+        self,
+        parse_response: dict[str, Any],
+        schema: dict[str, Any],
+        *,
+        citations: bool = False,
     ) -> dict[str, Any]:
-        """Run extract using input ref from parse response and given JSON schema. Returns full extract response."""
-        raw_ref = (
-            parse_response.get("_input_ref")
-            or parse_response.get("input")
-            or parse_response.get("document_url")
-            or parse_response.get("file_url")
-        )
-        if raw_ref is None:
-            raise ValueError(
-                "No input reference found for extract (need _input_ref, input, document_url, or file_url)"
-            )
-        if isinstance(raw_ref, dict) and "file_id" in raw_ref:
-            input_ref = f"reducto://{raw_ref['file_id']}"
-        elif isinstance(raw_ref, str):
-            input_ref = raw_ref
+        """Run extract using parse result. Prefer jobid:// to avoid re-parsing; fall back to reducto://file_id."""
+        job_id = parse_response.get("job_id")
+        if job_id:
+            input_ref = f"jobid://{job_id}"
+            logger.info("Extract using jobid (reuse parse)")
         else:
-            raise ValueError(
-                f"Input reference must be a string or dict with file_id, got {type(raw_ref).__name__}"
+            raw_ref = (
+                parse_response.get("_input_ref")
+                or parse_response.get("input")
+                or parse_response.get("document_url")
+                or parse_response.get("file_url")
             )
-        payload = {
+            if raw_ref is None:
+                raise ValueError(
+                    "No input reference found for extract (need job_id, _input_ref, input, document_url, or file_url)"
+                )
+            if isinstance(raw_ref, dict) and "file_id" in raw_ref:
+                input_ref = f"reducto://{raw_ref['file_id']}"
+            elif isinstance(raw_ref, str):
+                input_ref = raw_ref
+            else:
+                raise ValueError(
+                    f"Input reference must be a string or dict with file_id, got {type(raw_ref).__name__}"
+                )
+        payload: dict[str, Any] = {
             "input": input_ref,
             "instructions": {
                 "schema": schema,
-                "system_prompt": self.EXTRACT_INSTRUCTIONS,
+                "system_prompt": self.EXTRACT_SYSTEM_PROMPT,
+            },
+            "settings": {
+                "citations": {"enabled": citations, "numerical_confidence": True},
             },
         }
         logger.debug("extract input_ref=%s", input_ref)
         logger.debug("extract schema title=%s", schema.get("title"))
-        logger.debug("extract payload keys=%s", list(payload.keys()))
         with httpx.Client(timeout=300.0) as client:
             r = client.post(
                 f"{self.base_url}/extract",

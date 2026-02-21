@@ -1,68 +1,103 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "SubscriptionAgreementCanonical_v1",
+  "description": "Private fund subscription agreement. Extract subscriber/investor details, commitment amount, and signature block. All values must appear explicitly in the document.",
   "type": "object",
   "additionalProperties": false,
   "required": ["investor", "investment", "signatures"],
   "properties": {
     "investor": {
       "type": "object",
+      "description": "The subscriber or investor entity. Usually in the first section or 'Subscriber Information' block.",
       "additionalProperties": false,
       "required": ["legal_name", "entity_type"],
       "properties": {
-        "legal_name": { "type": ["string", "null"] },
+        "legal_name": {
+          "type": ["string", "null"],
+          "description": "Full legal name of the subscriber. Look for: 'Name of Subscriber', 'Investor Name', 'Legal Name', 'Subscriber:', 'Name of Investor', or the primary named party in the subscription section. Extract exactly as printed; do not abbreviate."
+        },
         "entity_type": {
           "type": ["string", "null"],
-          "enum": ["Individual", "Joint", "Trust", "IRA", "LLC", "Corporation", "Partnership", "Other", null]
+          "enum": ["Individual", "Joint", "Trust", "IRA", "LLC", "Corporation", "Partnership", "Other", null],
+          "description": "Type of entity. Look for: 'Type of Entity', 'Entity Type', 'Subscriber Type'. Use exactly one of: Individual, Joint, Trust, IRA, LLC, Corporation, Partnership, Other. Match the document wording to the enum (e.g. 'Limited Liability Company' -> LLC)."
         },
         "tax_id": {
           "type": ["object", "null"],
+          "description": "Tax ID. Look for: 'Taxpayer Identification Number', 'TIN', 'EIN', 'SSN', 'ITIN', 'Federal Tax ID', or W-9 references. Often in a separate block or table.",
           "additionalProperties": false,
           "properties": {
-            "type": { "type": ["string", "null"], "enum": ["SSN", "EIN", "ITIN", null] },
-            "value": { "type": ["string", "null"] }
+            "type": {
+              "type": ["string", "null"],
+              "enum": ["SSN", "EIN", "ITIN", null],
+              "description": "Use SSN for Social Security Number, EIN for Employer ID, ITIN for Individual Taxpayer ID."
+            },
+            "value": {
+              "type": ["string", "null"],
+              "description": "The number as printed (digits; dashes like XX-XXXXXXX are allowed). Do not infer or calculate."
+            }
           }
         },
         "addresses": {
           "type": ["array", "null"],
+          "description": "Investor addresses. Look for: 'Address', 'Principal Place of Business', 'Mailing Address', 'Legal Address', 'Street Address'. Each address is one object; use type 'legal', 'mailing', or 'other' if the document specifies.",
           "items": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "type": { "type": ["string", "null"], "enum": ["mailing", "legal", "other", null] },
-              "line1": { "type": ["string", "null"] },
-              "line2": { "type": ["string", "null"] },
-              "city": { "type": ["string", "null"] },
-              "state": { "type": ["string", "null"] },
-              "postal_code": { "type": ["string", "null"] },
-              "country": { "type": ["string", "null"] }
+              "type": {
+                "type": ["string", "null"],
+                "enum": ["mailing", "legal", "other", null],
+                "description": "Use 'legal' or 'mailing' if stated; otherwise 'other'."
+              },
+              "line1": { "type": ["string", "null"], "description": "Street address line 1." },
+              "line2": { "type": ["string", "null"], "description": "Line 2, suite, or unit." },
+              "city": { "type": ["string", "null"], "description": "City name." },
+              "state": { "type": ["string", "null"], "description": "State or province; use 2-letter code if document uses it (e.g. NY, CA)." },
+              "postal_code": { "type": ["string", "null"], "description": "ZIP or postal code." },
+              "country": { "type": ["string", "null"], "description": "Country name or code." }
             }
           }
         },
         "contact": {
           "type": ["object", "null"],
+          "description": "Contact if present. Look for: 'Email', 'Phone', 'Contact Information'.",
           "additionalProperties": false,
           "properties": {
-            "email": { "type": ["string", "null"] },
-            "phone": { "type": ["string", "null"] }
+            "email": { "type": ["string", "null"], "description": "Email address as printed." },
+            "phone": { "type": ["string", "null"], "description": "Phone number as printed." }
           }
         }
       }
     },
     "investment": {
       "type": "object",
+      "description": "Fund and subscription amount. Often on first page or in 'Subscription Details'.",
       "additionalProperties": false,
       "required": ["amount"],
       "properties": {
-        "fund_name": { "type": ["string", "null"] },
-        "class_series": { "type": ["string", "null"] },
+        "fund_name": {
+          "type": ["string", "null"],
+          "description": "Name of the fund. Look for: document title, 'Fund Name', 'Name of Fund', 'Partnership' name (e.g. 'XYZ Fund VI, L.P.'). Extract the full legal fund name."
+        },
+        "class_series": {
+          "type": ["string", "null"],
+          "description": "Class or series if specified: 'Class A', 'Series 1', 'Tranche 1', etc."
+        },
         "amount": {
           "type": "object",
+          "description": "Subscription/commitment amount. Look for: 'Subscription Amount', 'Aggregate Subscription', 'Commitment Amount', 'Dollar Amount of Subscription', 'Amount of Investment', or similar. Extract the numeric value only (no currency symbol in value).",
           "additionalProperties": false,
           "required": ["value", "currency"],
           "properties": {
-            "value": { "type": ["number", "string", "null"] },
-            "currency": { "type": ["string", "null"], "default": "USD" }
+            "value": {
+              "type": ["number", "string", "null"],
+              "description": "Numeric amount only. If document shows $1,000,000 or 1,000,000.00 use 1000000 (number). If written in words, convert to number. Do not include commas or $ in the value."
+            },
+            "currency": {
+              "type": ["string", "null"],
+              "default": "USD",
+              "description": "Currency code: USD, EUR, GBP, etc. Default USD if not stated."
+            }
           }
         }
       }
@@ -70,14 +105,27 @@
     "signatures": {
       "type": "array",
       "minItems": 1,
+      "description": "Signature block(s), usually at the end of the document. Extract each signatory block; first entry is typically the primary subscriber signatory.",
       "items": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "signer_name": { "type": ["string", "null"] },
-          "signer_title": { "type": ["string", "null"] },
-          "signed_date": { "type": ["string", "null"] },
-          "signature_present": { "type": ["boolean", "null"] }
+          "signer_name": {
+            "type": ["string", "null"],
+            "description": "Name of person signing. Look for: next to 'Signature' line, 'Authorized Signatory', 'Signed by', 'Name of Signatory'. Extract the printed name, not the signature image."
+          },
+          "signer_title": {
+            "type": ["string", "null"],
+            "description": "Title if present: 'Managing Member', 'President', 'Director', etc."
+          },
+          "signed_date": {
+            "type": ["string", "null"],
+            "description": "Date signed. Look for: 'Date' next to signature, 'Execution Date'. Use format as written (e.g. MM/DD/YYYY or Month DD, YYYY)."
+          },
+          "signature_present": {
+            "type": ["boolean", "null"],
+            "description": "True if a signature mark (handwritten or image) appears in the signature area; false if the line is blank."
+          }
         }
       }
     }

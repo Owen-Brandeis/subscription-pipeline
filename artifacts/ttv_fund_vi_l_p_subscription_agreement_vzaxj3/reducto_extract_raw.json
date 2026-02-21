@@ -1,0 +1,52 @@
+{
+  "job_id": "1cf27646-b872-46d2-a2d1-0905d2f6041e",
+  "usage": {
+    "num_pages": 41,
+    "num_fields": 20,
+    "credits": 82.0
+  },
+  "studio_link": "https://studio.reducto.ai/job/1cf27646-b872-46d2-a2d1-0905d2f6041e",
+  "result": [
+    {
+      "investor": {
+        "legal_name": "Burrows Private Equity Partners, LLC",
+        "entity_type": "LLC",
+        "tax_id": {
+          "type": "EIN",
+          "value": "46-2779408"
+        },
+        "addresses": [
+          {
+            "type": "other",
+            "line1": "3715 Northside Parkway NW",
+            "line2": "Building 200, Suite 600",
+            "city": "Atlanta",
+            "state": "GA",
+            "postal_code": "30327",
+            "country": "U.S.A."
+          }
+        ],
+        "contact": {
+          "email": "family@gleneaglesgroup.com",
+          "phone": "(404) 671-4402"
+        }
+      },
+      "investment": {
+        "fund_name": "TTV Fund VI, L.P.",
+        "amount": {
+          "value": 1000000,
+          "currency": "USD"
+        }
+      },
+      "signatures": [
+        {
+          "signer_name": "R. Lee Burrows, Jr.",
+          "signer_title": "Managing Member",
+          "signed_date": "11/4/2021 | 3:54 PM EDT",
+          "signature_present": true
+        }
+      ]
+    }
+  ],
+  "citations": null
+}

@@ -25,6 +25,18 @@ def _load_schema() -> dict:
     return json.loads(data)
 
 
+def _unwrap_citation_values(obj):
+    """If extract used citations, leaf values may be {value: X, citations: [...]}. Unwrap to X for downstream."""
+    if isinstance(obj, dict):
+        # Citation wrapper: only "value" and optionally "citations" -> use value
+        if "citations" in obj and "value" in obj:
+            return _unwrap_citation_values(obj["value"])
+        return {k: _unwrap_citation_values(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_unwrap_citation_values(v) for v in obj]
+    return obj
+
+
 def run_case_local(pdf_path: str | Path, case_id: str) -> dict[str, str]:
     """
     Run parse then extract for one case. Writes artifacts under ./artifacts/{case_id}/.
@@ -51,9 +63,11 @@ def run_case_local(pdf_path: str | Path, case_id: str) -> dict[str, str]:
     if isinstance(extract_raw, dict) and "result" in extract_raw:
         res = extract_raw["result"]
         if isinstance(res, list) and len(res) > 0 and isinstance(res[0], dict):
-            extracted = res[0]
+            extracted = _unwrap_citation_values(res[0])
         elif isinstance(res, dict):
-            extracted = res
+            extracted = _unwrap_citation_values(res)
+        else:
+            extracted = _unwrap_citation_values(res)
 
     extract_raw_path = write_artifact(
         case_id, EXTRACT_RAW_ARTIFACT, json.dumps(extract_raw, indent=2)

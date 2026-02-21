@@ -423,11 +423,14 @@ async def run(
             logger.exception("analyze_template failed")
             return _error_html(f"Template analysis failed: {type(e).__name__}: {e}. Check server logs.")
         (tdir / "detected_fields.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
+        from app.auto_map_schema import map_candidates_to_schema
+        candidates = result.get("candidates") or []
+        mapped_fields = map_candidates_to_schema(candidates)
         starter_config = {
             "template_id": template_id,
             "pdf_sha256": result.get("pdf_sha256", template_sha256),
             "page_count": result.get("page_count", 0),
-            "fields": [],
+            "fields": mapped_fields,
         }
         (tdir / "template_config.json").write_text(json.dumps(starter_config, indent=2), encoding="utf-8")
         template_config = starter_config

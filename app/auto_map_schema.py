@@ -3,13 +3,26 @@
 from typing import Any
 
 # Rules: (schema_path, list of keyword phrases; label matched case-insensitive)
+# Order matters: first match wins. Put more specific labels before generic (e.g. "signed date" before "date").
 SCHEMA_RULES = [
-    ("investor.legal_name", ["name", "legal name", "investor name", "entity name", "subscriber name", "name of subscriber", "name of investor"]),
-    ("investor.entity_type", ["entity type", "type of entity", "entity type"]),
-    ("investment.amount.value", ["amount", "subscription amount", "investment amount", "commitment", "aggregate subscription", "dollar amount"]),
-    ("investor.tax_id.value", ["ein", "ssn", "itin", "tax id", "tax identification", "taxpayer identification"]),
-    ("signatures[0].signed_date", ["date", "signed date", "signing date", "date signed"]),
-    ("signatures[0].signer_name", ["signature", "signer", "authorized signatory", "signed by", "name of signatory"]),
+    ("investor.legal_name", ["legal name", "investor name", "entity name", "subscriber name", "name of subscriber", "name of investor", "name"]),
+    ("investor.entity_type", ["entity type", "type of entity", "type of subscriber"]),
+    ("investment.amount.value", ["subscription amount", "aggregate subscription", "commitment amount", "dollar amount", "investment amount", "amount of subscription", "commitment", "amount"]),
+    ("investment.fund_name", ["fund name", "name of fund", "partnership"]),
+    ("investment.class_series", ["class", "series", "class a", "series 1"]),
+    ("investor.tax_id.value", ["ein", "ssn", "itin", "tax id", "tax identification", "taxpayer identification", "federal tax"]),
+    ("investor.tax_id.type", ["tax id type", "identification type"]),
+    ("investor.addresses[0].line1", ["address", "street", "street address", "line 1", "address line 1"]),
+    ("investor.addresses[0].line2", ["address line 2", "suite", "unit", "line 2"]),
+    ("investor.addresses[0].city", ["city"]),
+    ("investor.addresses[0].state", ["state", "province"]),
+    ("investor.addresses[0].postal_code", ["zip", "postal code", "zip code"]),
+    ("investor.addresses[0].country", ["country"]),
+    ("investor.contact.email", ["email", "e-mail"]),
+    ("investor.contact.phone", ["phone", "telephone", "fax"]),
+    ("signatures[0].signer_name", ["signature", "signer", "authorized signatory", "signed by", "name of signatory", "print name"]),
+    ("signatures[0].signer_title", ["title", "signer title"]),
+    ("signatures[0].signed_date", ["signed date", "signing date", "date signed", "execution date", "date"]),
 ]
 
 MIN_CONFIDENCE = 0.5

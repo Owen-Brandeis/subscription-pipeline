@@ -1,6 +1,7 @@
 """Flat PDF filling: draw text/X in bboxes from template_config, merge overlay onto template with pypdf."""
 
 import io
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
 
@@ -11,6 +12,40 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfgen import canvas as rl_canvas
 
 from app.path_get import get_by_path
+
+
+def _format_value_for_display(val: Any, schema_path: str) -> str:
+    """Format extracted value for readable PDF display (amounts with commas, dates as MM/DD/YYYY)."""
+    if val is None:
+        return ""
+    if schema_path.endswith(".value") and "amount" in schema_path:
+        # investment.amount.value: show as currency with commas
+        try:
+            if isinstance(val, (int, float)):
+                n = float(val) if not isinstance(val, int) else int(val)
+            else:
+                s = str(val).strip().lstrip("$").replace(",", "")
+                n = float(s) if "." in s else int(s)
+            return f"{n:,.0f}" if n == int(n) else f"{n:,.2f}"
+        except (ValueError, TypeError):
+            return str(val).strip()
+    if "date" in schema_path.lower():
+        # e.g. signatures[0].signed_date: ISO YYYY-MM-DD -> MM/DD/YYYY for display
+        s = str(val).strip()
+        if not s:
+            return ""
+        for fmt_in, fmt_out in [
+            ("%Y-%m-%d", "%m/%d/%Y"),
+            ("%m/%d/%Y", "%m/%d/%Y"),
+            ("%m-%d-%Y", "%m/%d/%Y"),
+        ]:
+            try:
+                dt = datetime.strptime(s, fmt_in)
+                return dt.strftime("%m/%d/%Y")
+            except ValueError:
+                continue
+        return s
+    return str(val).strip()
 
 
 def _get_field_type(f: dict) -> str:
@@ -179,13 +214,12 @@ def _create_overlay_pages(
             if field_type == "checkbox":
                 if _checkbox_checked(f, val):
                     _draw_checkbox(c, x0, y0, x1, y1, height)
-            elif field_type == "multiline":
-                text = "" if val is None else str(val).strip()
-                _draw_multiline(c, x0, y0, x1, y1, text, height, font_size=font_size)
             else:
-                # text, date, or other
-                text = "" if val is None else str(val).strip()
-                _draw_text_field(c, x0, y0, x1, y1, text, height, font_size=font_size)
+                text = _format_value_for_display(val, schema_path)
+                if field_type == "multiline":
+                    _draw_multiline(c, x0, y0, x1, y1, text, height, font_size=font_size)
+                else:
+                    _draw_text_field(c, x0, y0, x1, y1, text, height, font_size=font_size)
             field_done += 1
             if progress_callback and total_fields:
                 progress_callback(field_done, total_fields)
